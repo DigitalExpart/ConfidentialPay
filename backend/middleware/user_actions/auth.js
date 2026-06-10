@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-const { ADMIN_USER, VALID_EMAIL } = require("../models/mockData.js");
+const { ADMIN_USER, VALID_EMAIL } = require("../../models/mockData.js");
 
 const JWT_SECRET = process.env.JWT_SECRET ?? "confidentialpay-dev-secret-change-me";
 
