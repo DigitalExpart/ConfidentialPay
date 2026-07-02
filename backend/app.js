@@ -14,10 +14,12 @@ app.use(express.urlencoded({ extended: true }));
 
 const user = require('./routes/userRoute');
 const product = require('./routes/productRoute');
+const order = require('./routes/orderRoute');
 const business = require('./routes/businessRoute');
 
 app.use('/api/v1', user);
 app.use('/api/v1', product);
+app.use('/api/v1', order);
 app.use('/api', business);
 
 app.get('/', (req, res) => {
