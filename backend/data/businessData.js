@@ -47,9 +47,14 @@ const templates = [
 ];
 
 const services = [
-  { id: "svc-1", name: "Payroll Automation", category: "Operations", description: "Automate multi-chain payroll distribution", price: 2500, active: true },
+  { id: "svc-1", name: "Payroll Automation", category: "Operations", description: "Automate multi-chain confidential payroll distribution", price: 2500, active: true },
   { id: "svc-2", name: "Treasury Vault", category: "Treasury", description: "Secure treasury balances and policy controls", price: 3800, active: true },
-  { id: "svc-3", name: "Compliance Review", category: "Compliance", description: "KYC and AML screening workflow", price: 1800, active: true },
+  { id: "svc-3", name: "Compliance Review", category: "Compliance", description: "KYC and AML screening with selective disclosure keys", price: 1800, active: true },
+  { id: "svc-4", name: "ZK Proof Cluster", category: "Privacy", description: "Ligero/Arc batch proving for payroll and shielded transfers", price: 4200, active: true },
+  { id: "svc-5", name: "FHE Roster Engine", category: "Privacy", description: "Encrypted salary state with Fhenix/Zama-compatible handles", price: 5100, active: true },
+  { id: "svc-6", name: "CCTP Bridge Desk", category: "Settlement", description: "Circle CCTP burn-and-mint orchestration across domains", price: 2900, active: true },
+  { id: "svc-7", name: "Hyperlane Sync", category: "Settlement", description: "Cross-VM state synchronization for payroll attestations", price: 2400, active: true },
+  { id: "svc-8", name: "Agentic Micropayments", category: "Agents", description: "Private AI-agent payroll and usage-based settlements", price: 1600, active: true },
 ];
 
 const dashboardStats = {

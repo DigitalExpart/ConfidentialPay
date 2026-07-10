@@ -1,38 +1,27 @@
-const Cart = require("../../models/Cart")
-const Review = require("../../models/Review")
-const Order = require("../../models/Order")
-const Whislist = require("../../models/WishList")
+/**
+ * Mock capability checks — no Cart/Order/WishList mongoose models.
+ */
+const { transactions, employees } = require("../../data/businessData");
 
-module.exports = async(product,user,type) =>{
-    let hasOnCart = null
-    let hasBought = null
-    let hasOnWishlist = null
-    let hasReviewed = null
-    if (user) {
-        //cart bahek aru ko lagi check gareko
-        if (type !=='carts') {
-            //has on cart?
-            hasOnCart = await Cart.findOne({ user: user._id, product: product._id, isDeleted: null })
-            if (!hasOnCart) hasOnCart = false
-        }
+exports.hasActivePayroll = (req, res, next) => {
+  req.userCapabilities = req.userCapabilities || {};
+  req.userCapabilities.hasActivePayroll = transactions.some((t) => t.type === "payroll" && t.status === "completed");
+  next();
+};
 
-        //wishlist bahek aru ko lagi check gareko
-        if (type !=='wishlists') {
-            // has on wishlist?
-            hasOnWishlist = await Whislist.findOne({ user: user._id, product: product._id, isDeleted: null })
-            if (!hasOnWishlist) hasOnWishlist = false
-        }
+exports.hasEmployeeRoster = (req, res, next) => {
+  req.userCapabilities = req.userCapabilities || {};
+  req.userCapabilities.employeeCount = employees.length;
+  req.userCapabilities.hasEmployeeRoster = employees.length > 0;
+  next();
+};
 
-        if (type==='product') {
-            //has bought?
-            hasBought = await Order.findOne({ user: user, $or: [{ 'status.currentStatus': 'complete' }, { 'status.currentStatus': 'tobereturned', 'status.currentStatus': 'return' }] })
-            hasBought ? hasBought = true : hasBought = false
-            
-            //has reviewed?
-            hasReviewed = await Review.findOne({ user: user, product: product._id }).select('comment star user')
-            if (!hasReviewed) hasReviewed = false
-        }
-    }
-    
-    return {hasBought,hasOnCart,hasOnWishlist,hasReviewed}
-}
+exports.attachWishlistStub = (req, res, next) => {
+  req.wishlist = [];
+  next();
+};
+
+exports.attachCartStub = (req, res, next) => {
+  req.cart = { items: [], protocolServices: [] };
+  next();
+};

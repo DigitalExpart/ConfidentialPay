@@ -1,4 +1,6 @@
 const app = require('./app');
+// Ensure full middleware catalog stays referenced from the server entrypoint.
+const middlewareCatalog = require('./middlewares');
 const PORT = process.env.PORT || 4000;
 
 process.on('uncaughtException', (err) => {
@@ -8,6 +10,7 @@ process.on('uncaughtException', (err) => {
 
 const server = app.listen(PORT, () => {
   console.log(`ConfidentialPay backend listening on port ${PORT}`);
+  console.log(`Middleware catalog loaded: ${middlewareCatalog.loaded.length} modules`);
 });
 
 process.on('unhandledRejection', (err) => {
