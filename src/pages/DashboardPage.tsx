@@ -1,3 +1,4 @@
+﻿import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useApiData } from "@/lib/useApiData";
 import { motion } from "framer-motion";
@@ -22,8 +23,6 @@ import {
   Plus,
   ArrowLeftRight,
   Calendar,
-  Edit,
-  X,
   Download,
 } from "lucide-react";
 import { api } from "@/lib/api";
@@ -35,9 +34,13 @@ const breakdownColors = ["var(--success)", "var(--warning)", "var(--muted-foregr
 const chainColors = ["var(--chain-bnb)", "var(--chain-eth)", "var(--chain-sol)", "var(--chain-base)"];
 
 export default function DashboardPage() {
+  const [range, setRange] = useState<"weekly" | "monthly" | "yearly">("monthly");
   const stats = useApiData<any>("/api/dashboard/stats");
   const txs = useApiData<any[]>("/api/dashboard/transactions", (payload) => payload.items ?? []);
-  const activity = useApiData<any[]>("/api/dashboard/payroll-activity?range=monthly", (payload) => payload.series ?? []);
+  const activity = useApiData<any[]>(
+    `/api/dashboard/payroll-activity?range=${range}`,
+    (payload) => payload.series ?? [],
+  );
   const upcoming = useApiData<any[]>("/api/dashboard/upcoming-payrolls", (payload) => payload.items ?? []);
 
   const s = stats.data;
@@ -55,7 +58,7 @@ export default function DashboardPage() {
         title="Dashboard"
         subtitle="Welcome back — here's what's happening across your treasury."
         actions={
-          <Link to="/payroll" className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-glow">
+          <Link to="/payroll" className="btn-primary px-4 py-2 text-sm shadow-elegant">
             <Play className="h-4 w-4" /> Run Payroll
           </Link>
         }
@@ -157,12 +160,22 @@ export default function DashboardPage() {
           <div className="mb-4 flex items-center justify-between">
             <div>
               <h3 className="text-base font-semibold">Payroll Activity</h3>
-              <p className="text-xs text-muted-foreground">Cross-chain payroll volume — last 30 days</p>
+              <p className="text-xs text-muted-foreground">Cross-chain payroll volume — {range}</p>
             </div>
-            <div className="flex gap-1 rounded-lg border border-border bg-card/40 p-1 text-xs">
-              {['Weekly', 'Monthly', 'Yearly'].map((r) => (
-                <button key={r} className={`rounded px-2.5 py-1 ${r === 'Monthly' ? 'bg-gradient-primary text-primary-foreground' : 'text-muted-foreground'}`}>
-                  {r}
+            <div className="flex gap-1 rounded-lg border border-border bg-card p-1 text-xs">
+              {([
+                ["weekly", "Weekly"],
+                ["monthly", "Monthly"],
+                ["yearly", "Yearly"],
+              ] as const).map(([key, label]) => (
+                <button
+                  key={key}
+                  onClick={() => setRange(key)}
+                  className={`rounded-md px-2.5 py-1 font-semibold ${
+                    range === key ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {label}
                 </button>
               ))}
             </div>
@@ -207,7 +220,24 @@ export default function DashboardPage() {
         <GlassCard className="xl:col-span-2">
           <div className="mb-4 flex items-center justify-between">
             <h3 className="text-base font-semibold">Recent Transactions</h3>
-            <button onClick={() => toast.success('Export started')} className="inline-flex items-center gap-1 rounded-lg border border-border bg-card/40 px-3 py-1.5 text-xs hover:bg-muted">
+            <button
+              onClick={() => {
+                const rows = txs.data ?? [];
+                const csv = [
+                  "id,type,amount,status,chain,date",
+                  ...rows.map((t: any) => [t.id, t.type, t.amount, t.status, t.chain, t.date].join(",")),
+                ].join("\n");
+                const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = `transactions-${Date.now()}.csv`;
+                a.click();
+                URL.revokeObjectURL(url);
+                toast.success("CSV downloaded");
+              }}
+              className="inline-flex items-center gap-1 rounded-xl border border-border bg-card px-3 py-1.5 text-xs font-semibold hover:bg-muted"
+            >
               <Download className="h-3 w-3" /> Export CSV
             </button>
           </div>
@@ -245,7 +275,9 @@ export default function DashboardPage() {
         <GlassCard>
           <div className="mb-4 flex items-center justify-between">
             <h3 className="text-base font-semibold">Upcoming Payrolls</h3>
-            <button className="rounded-lg border border-border bg-card/40 px-2 py-1 text-[10px]">View all</button>
+            <Link to="/payroll" className="rounded-lg border border-border bg-card px-2 py-1 text-[10px] font-semibold hover:bg-muted">
+              View all
+            </Link>
           </div>
           <div className="space-y-3">
             {(upcoming.data ?? []).map((u: any) => (
@@ -254,7 +286,7 @@ export default function DashboardPage() {
                   <p className="text-sm font-medium">{u.name}</p>
                   <StatusBadge status={u.status} />
                 </div>
-                <p className="mt-1 text-xs text-muted-foreground">{u.employees} employees • {fmtUSD(u.amount)}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{u.employees} employees · {fmtUSD(u.amount)}</p>
                 <div className="mt-2 flex items-center gap-2 text-[11px] text-muted-foreground">
                   <Calendar className="h-3 w-3" /> {u.date}
                 </div>
@@ -290,7 +322,7 @@ function QuickAction({ icon: Icon, title, subtitle, gradient, to }: any) {
   return (
     <Link to={to} className={`rounded-2xl border border-border bg-card/40 p-3 text-left ${gradient ? 'bg-gradient-primary/10' : ''}`}>
       <div className="flex items-center justify-between">
-        <div className="grid h-9 w-9 place-items-center rounded-lg bg-gradient-primary text-primary-foreground shadow-glow">
+        <div className="grid h-9 w-9 place-items-center rounded-lg bg-gradient-primary text-primary-foreground ">
           <Icon className="h-4 w-4" />
         </div>
         <ArrowUpRight className="h-4 w-4 text-muted-foreground" />
@@ -308,3 +340,4 @@ function Sparkline() {
     </div>
   );
 }
+

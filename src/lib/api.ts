@@ -69,7 +69,44 @@ export const api = {
       err.response = { status: 401, data: { error: "Invalid" } };
       throw err;
     }
-    return { data: { ok: true, mock: true, ...(body as object) } };
+    if (url === "/api/auth/forgot-password") {
+      return { data: { success: true, message: "Reset link sent" } };
+    }
+    if (url === "/api/employees" || url === "/api/payroll/employees") {
+      const b = (body ?? {}) as Record<string, unknown>;
+      return {
+        data: {
+          success: true,
+          employee: { id: `e_${Date.now().toString(36)}`, status: "pending", ...b },
+        },
+      };
+    }
+    if (url.includes("/approve")) {
+      return { data: { success: true, status: "active" } };
+    }
+    if (url === "/api/payroll/execute" || url.includes("/payroll/scheduled") || url.includes("/templates")) {
+      return { data: { success: true, mock: true, ...(body as object), id: `mock_${Date.now().toString(36)}` } };
+    }
+    if (url === "/api/compliance/screen") {
+      return {
+        data: {
+          success: true,
+          screen: { screenId: `aml_${Date.now().toString(36)}`, status: "cleared", riskScore: 8 },
+        },
+      };
+    }
+    if (url === "/api/compliance/viewing-key") {
+      return {
+        data: {
+          success: true,
+          key: { keyId: `vk_${Date.now().toString(36)}`, status: "active", expiresIn: 3600 },
+        },
+      };
+    }
+    if (url.startsWith("/api/treasury/") || url.startsWith("/api/bridge/") || url.startsWith("/api/settings/")) {
+      return { data: { success: true, mock: true, ...(body as object) } };
+    }
+    return { data: { ok: true, mock: true, success: true, ...(body as object) } };
   },
   async put(url: string, body?: unknown) {
     const res = await tryReal(() => real.put(url, body));

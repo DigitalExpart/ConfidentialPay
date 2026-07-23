@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+﻿import { Link } from "react-router-dom";
 import { useState } from "react";
 import { Mail, ArrowLeft, CheckCircle2, Shield } from "lucide-react";
 import { api } from "@/lib/api";
@@ -23,7 +23,7 @@ export default function ForgotPasswordPage() {
     <div className="flex min-h-screen items-center justify-center px-4">
       <div className="glass-strong w-full max-w-md rounded-2xl p-8 shadow-elegant">
         <div className="mb-6 flex items-center gap-3">
-          <div className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-primary shadow-glow">
+          <div className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-primary ">
             <Shield className="h-5 w-5 text-primary-foreground" />
           </div>
           <span className="font-semibold">ConfidentialPay</span>
@@ -31,12 +31,12 @@ export default function ForgotPasswordPage() {
 
         {sent ? (
           <div className="text-center">
-            <CheckCircle2 className="mx-auto h-12 w-12 text-secondary" />
+            <CheckCircle2 className="mx-auto h-12 w-12 text-primary" />
             <h2 className="mt-4 text-xl font-semibold">Check your inbox</h2>
             <p className="mt-2 text-sm text-muted-foreground">
               We sent a reset link to <span className="font-medium text-foreground">{email}</span>.
             </p>
-            <Link to="/login" className="mt-6 inline-flex items-center gap-2 text-sm text-secondary hover:underline">
+            <Link to="/login" className="mt-6 inline-flex items-center gap-2 text-sm text-primary hover:underline">
               <ArrowLeft className="h-4 w-4" /> Return to login
             </Link>
           </div>
@@ -58,7 +58,7 @@ export default function ForgotPasswordPage() {
               </div>
               <button
                 disabled={loading}
-                className="w-full rounded-lg bg-gradient-primary py-2.5 text-sm font-semibold text-primary-foreground shadow-glow disabled:opacity-60"
+                className="w-full rounded-lg bg-gradient-primary py-2.5 text-sm font-semibold text-primary-foreground  disabled:opacity-60"
               >
                 {loading ? "Sending…" : "Send Reset Link"}
               </button>
@@ -72,3 +72,4 @@ export default function ForgotPasswordPage() {
     </div>
   );
 }
+

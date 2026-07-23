@@ -124,13 +124,62 @@ export function mockGet(url: string): unknown {
   if (u === "/api/treasury/balances") return mockBalances;
   if (u === "/api/treasury/transactions") return { items: mockTransactions };
 
+  if (u === "/api/compliance")
+    return {
+      policyHealth: "98%",
+      auditTrail: "24",
+      openIssues: "2",
+      checks: [
+        { id: "c1", name: "KYC Review", detail: "All treasury admins verified", status: "passed" },
+        { id: "c2", name: "AML Screening", detail: "No high-risk matches detected", status: "passed" },
+        { id: "c3", name: "Privacy Controls", detail: "Selective disclosure keys active", status: "pending" },
+      ],
+      score: mockComplianceScore,
+      status: mockComplianceStatus,
+    };
   if (u === "/api/compliance/score") return mockComplianceScore;
   if (u === "/api/compliance/status") return mockComplianceStatus;
   if (u === "/api/compliance/audit")
     return { items: mockTransactions.map((t) => ({ ...t, audit: t.status === "completed" ? "pass" : "review" })) };
 
-  if (u === "/api/settings") return { company: "ConfidentialPay Inc", defaultChain: "BNB" };
+  if (u === "/api/settings")
+    return {
+      company: "ConfidentialPay Inc",
+      defaultChain: "BNB",
+      privacyLevel: "high",
+      timezone: "UTC-5",
+      protocol: "ConfidentialPay",
+      version: "0.9.4-orchestrator",
+      feeBpsDefault: 45,
+    };
   if (u === "/api/settings/team") return { items: mockTeam };
+
+  if (u === "/api/notifications")
+    return {
+      items: [
+        {
+          id: "ntf_seed_1",
+          title: "Payroll ready",
+          message: "March bi-weekly batch is ready for review on BNB Chain.",
+          read: false,
+          createdAt: new Date(Date.now() - 1000 * 60 * 18).toISOString(),
+        },
+        {
+          id: "ntf_seed_2",
+          title: "Compliance clear",
+          message: "AML mesh cleared 12 employee wallets this hour.",
+          read: false,
+          createdAt: new Date(Date.now() - 1000 * 60 * 55).toISOString(),
+        },
+        {
+          id: "ntf_seed_3",
+          title: "Treasury deposit",
+          message: "USDC deposit of $10,000 confirmed on BNB.",
+          read: true,
+          createdAt: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(),
+        },
+      ],
+    };
 
   if (u === "/api/auth/me") return { user: ADMIN_USER };
   return null;

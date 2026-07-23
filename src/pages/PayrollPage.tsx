@@ -36,7 +36,7 @@ export default function PayrollPage() {
             key={t}
             onClick={() => setTab(t)}
             className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
-              tab === t ? "bg-gradient-primary text-primary-foreground shadow-glow" : "text-muted-foreground hover:text-foreground"
+              tab === t ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
             }`}
           >
             {t}
@@ -87,7 +87,7 @@ function RunPayroll() {
           <div key={label} className="flex items-center gap-3">
             <div
               className={`grid h-9 w-9 place-items-center rounded-full border-2 text-sm font-semibold transition ${
-                i === step ? "border-primary bg-gradient-primary text-primary-foreground shadow-glow" : i < step ? "border-secondary bg-secondary/20 text-secondary" : "border-border text-muted-foreground"
+                i === step ? "border-primary bg-primary text-primary-foreground" : i < step ? "border-primary/40 bg-primary/10 text-primary" : "border-border text-muted-foreground"
               }`}
             >
               {i < step ? <Check className="h-4 w-4" /> : i + 1}
@@ -163,7 +163,7 @@ function RunPayroll() {
             </table>
           </div>
           <div className="mt-6 flex justify-end">
-            <button disabled={selected.length === 0} onClick={() => setStep(1)} className="rounded-lg bg-gradient-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-glow disabled:opacity-50">
+            <button disabled={selected.length === 0} onClick={() => setStep(1)} className="btn-primary px-5 py-2.5 text-sm disabled:opacity-50">
               Continue ({selected.length})
             </button>
           </div>
@@ -225,7 +225,7 @@ function RunPayroll() {
           </div>
           <div className="mt-6 flex justify-between">
             <button onClick={() => setStep(0)} className="text-sm text-muted-foreground hover:text-foreground">← Back</button>
-            <button onClick={() => setStep(2)} className="rounded-lg bg-gradient-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-glow">Review Payroll</button>
+            <button onClick={() => setStep(2)} className="btn-primary px-5 py-2.5 text-sm">Review Payroll</button>
           </div>
         </GlassCard>
       )}
@@ -233,7 +233,7 @@ function RunPayroll() {
       {step === 2 && (
         <GlassCard className="text-center">
           <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="mx-auto max-w-md">
-            <div className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-gradient-primary shadow-glow">
+            <div className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-gradient-primary">
               <Lock className="h-8 w-8 text-primary-foreground" />
             </div>
             <h3 className="mt-4 text-xl font-semibold">Confirm Payroll Execution</h3>
@@ -248,7 +248,7 @@ function RunPayroll() {
             </div>
             <div className="mt-6 flex justify-center gap-3">
               <button onClick={() => setStep(1)} className="rounded-lg border border-border bg-card px-4 py-2 text-sm">← Back</button>
-              <button onClick={execute} className="inline-flex items-center gap-2 rounded-lg bg-gradient-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-glow animate-glow-pulse">
+              <button onClick={execute} className="btn-primary px-5 py-2.5 text-sm">
                 <Lock className="h-4 w-4" /> Execute Payroll
               </button>
             </div>
@@ -282,12 +282,74 @@ function Select({ label, value, onChange, options }: { label: string; value: str
 }
 
 function Scheduled() {
-  const { data } = useApiData<any[]>("/api/payroll/scheduled", (payload) => payload.items ?? []);
+  const { data, reload } = useApiData<any[]>("/api/payroll/scheduled", (payload) => payload.items ?? []);
+  const [busyId, setBusyId] = useState<string | null>(null);
+
+  async function scheduleNew() {
+    try {
+      await api.post("/api/payroll/scheduled", {
+        employees: 8,
+        amount: 28100,
+        chain: "BNB",
+        destChain: "ETH",
+        template: "Custom schedule",
+        date: new Date(Date.now() + 3 * 86400000).toISOString(),
+      });
+      toast.success("Payroll scheduled");
+      reload();
+    } catch {
+      toast.error("Could not schedule payroll");
+    }
+  }
+
+  async function runNow(item: any) {
+    setBusyId(item.id);
+    try {
+      await api.post("/api/payroll/execute", {
+        employeeIds: item.employeeIds ?? [],
+        chain: item.chain,
+        privacy: item.privacy || "high",
+      });
+      toast.success("Scheduled payroll executed");
+      reload();
+    } catch {
+      toast.error("Run failed");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function cancel(id: string) {
+    setBusyId(id);
+    try {
+      await api.post(`/api/payroll/scheduled/${id}/cancel`);
+      toast.success("Schedule cancelled");
+      reload();
+    } catch {
+      toast.error("Cancel failed");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function remove(id: string) {
+    setBusyId(id);
+    try {
+      await api.delete(`/api/payroll/scheduled/${id}`);
+      toast.success("Schedule removed");
+      reload();
+    } catch {
+      toast.error("Remove failed");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
   return (
     <GlassCard>
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-base font-semibold">Scheduled Payrolls</h3>
-        <button className="inline-flex items-center gap-1 rounded-lg bg-gradient-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground">
+        <button onClick={scheduleNew} className="btn-primary px-3 py-1.5 text-xs">
           <Plus className="h-3 w-3" /> Schedule new
         </button>
       </div>
@@ -307,7 +369,7 @@ function Scheduled() {
             <tr key={s.id} className="border-b border-border/60 hover:bg-muted/30">
               <td className="py-3">
                 <div className="flex items-center gap-2 text-xs">
-                  <Calendar className="h-3.5 w-3.5 text-secondary" />
+                  <Calendar className="h-3.5 w-3.5 text-primary" />
                   {new Date(s.date).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })}
                 </div>
               </td>
@@ -317,9 +379,29 @@ function Scheduled() {
               <td className="py-3"><ChainBadge chain={s.chain} /></td>
               <td className="py-3">
                 <div className="flex gap-1">
-                  <button className="rounded p-1 hover:bg-muted"><Edit className="h-3.5 w-3.5" /></button>
-                  <button className="rounded p-1 hover:bg-destructive/20 hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
-                  <button className="rounded bg-gradient-primary px-2 py-1 text-[10px] font-semibold text-primary-foreground">Run</button>
+                  <button
+                    disabled={busyId === s.id || s.status === "cancelled"}
+                    onClick={() => runNow(s)}
+                    className="rounded-md bg-primary px-2 py-1 text-[10px] font-semibold text-primary-foreground disabled:opacity-50"
+                  >
+                    Run
+                  </button>
+                  <button
+                    disabled={busyId === s.id}
+                    onClick={() => cancel(s.id)}
+                    className="rounded p-1 hover:bg-muted disabled:opacity-50"
+                    title="Cancel"
+                  >
+                    <Edit className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    disabled={busyId === s.id}
+                    onClick={() => remove(s.id)}
+                    className="rounded p-1 hover:bg-destructive/20 hover:text-destructive disabled:opacity-50"
+                    title="Delete"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
                 </div>
               </td>
             </tr>
@@ -332,11 +414,28 @@ function Scheduled() {
 
 function History() {
   const { data } = useApiData<any[]>("/api/payroll/history", (payload) => payload.items ?? []);
+
+  function exportCsv() {
+    const rows = data ?? [];
+    const csv = [
+      "id,amount,employees,chain,status,date",
+      ...rows.map((t: any) => [t.id, t.amount, t.employees, t.chain, t.status, t.date].join(",")),
+    ].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `payroll-history-${Date.now()}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("History exported");
+  }
+
   return (
     <GlassCard>
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-base font-semibold">Payroll History</h3>
-        <button className="inline-flex items-center gap-1 rounded-lg border border-border bg-card/40 px-3 py-1.5 text-xs">
+        <button onClick={exportCsv} className="inline-flex items-center gap-1 rounded-xl border border-border bg-card px-3 py-1.5 text-xs font-semibold hover:bg-muted">
           <Download className="h-3 w-3" /> Export
         </button>
       </div>
@@ -369,7 +468,70 @@ function History() {
 }
 
 function Templates() {
-  const { data } = useApiData<any[]>("/api/payroll/templates", (payload) => payload.items ?? []);
+  const { data, reload } = useApiData<any[]>("/api/payroll/templates", (payload) => payload.items ?? []);
+  const [busyId, setBusyId] = useState<string | null>(null);
+
+  async function createTemplate() {
+    try {
+      await api.post("/api/payroll/templates", {
+        name: `Template ${new Date().toLocaleDateString()}`,
+        employees: 5,
+        amount: 19500,
+        chain: "BNB",
+      });
+      toast.success("Template created");
+      reload();
+    } catch {
+      toast.error("Could not create template");
+    }
+  }
+
+  async function runTemplate(t: any) {
+    setBusyId(t.id);
+    try {
+      await api.post("/api/payroll/execute", {
+        employeeIds: t.employeeIds ?? [],
+        chain: t.chain,
+        privacy: t.privacy || "high",
+        templateId: t.id,
+      });
+      toast.success(`Ran ${t.name}`);
+      reload();
+    } catch {
+      toast.error("Template run failed");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function duplicate(t: any) {
+    try {
+      await api.post("/api/payroll/templates", {
+        name: `${t.name} (copy)`,
+        employees: t.employees,
+        amount: t.amount,
+        chain: t.chain,
+        employeeIds: t.employeeIds ?? [],
+      });
+      toast.success("Template duplicated");
+      reload();
+    } catch {
+      toast.error("Duplicate failed");
+    }
+  }
+
+  async function rename(t: any) {
+    const name = window.prompt("Rename template", t.name);
+    if (!name) return;
+    try {
+      await api.put(`/api/payroll/templates/${t.id}`, { name });
+      toast.success("Template updated");
+      reload();
+    } catch {
+      toast.error("Update failed");
+    }
+  }
+
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {(data ?? []).map((t: any) => (
@@ -381,20 +543,30 @@ function Templates() {
             </div>
             <ChainBadge chain={t.chain} />
           </div>
-          <p className="mt-3 text-xs text-muted-foreground">Last used: {t.lastUsed}</p>
+          <p className="mt-3 text-xs text-muted-foreground">Last used: {t.lastUsed || "—"}</p>
           <div className="mt-4 flex gap-2">
-            <button className="flex-1 rounded-lg bg-gradient-primary py-2 text-xs font-semibold text-primary-foreground shadow-glow">▶ Run</button>
-            <button className="rounded-lg border border-border bg-card/40 p-2"><Edit className="h-3.5 w-3.5" /></button>
-            <button className="rounded-lg border border-border bg-card/40 p-2"><Copy className="h-3.5 w-3.5" /></button>
+            <button
+              disabled={busyId === t.id}
+              onClick={() => runTemplate(t)}
+              className="btn-primary flex-1 py-2 text-xs disabled:opacity-50"
+            >
+              Run
+            </button>
+            <button onClick={() => rename(t)} className="rounded-xl border border-border bg-card p-2 hover:bg-muted" title="Rename">
+              <Edit className="h-3.5 w-3.5" />
+            </button>
+            <button onClick={() => duplicate(t)} className="rounded-xl border border-border bg-card p-2 hover:bg-muted" title="Duplicate">
+              <Copy className="h-3.5 w-3.5" />
+            </button>
           </div>
         </GlassCard>
       ))}
       <GlassCard className="grid place-items-center border-dashed text-center text-muted-foreground hover:text-foreground">
-        <button className="inline-flex flex-col items-center gap-2">
-          <div className="grid h-10 w-10 place-items-center rounded-full border border-dashed border-border">
+        <button onClick={createTemplate} className="inline-flex flex-col items-center gap-2">
+          <div className="grid h-10 w-10 place-items-center rounded-xl border border-dashed border-border">
             <Plus className="h-4 w-4" />
           </div>
-          <span className="text-sm">New Template</span>
+          <span className="text-sm font-semibold">New Template</span>
         </button>
       </GlassCard>
     </div>
